@@ -21,7 +21,7 @@ extension Fourier.Transform {
             let chirp = (0..<count).map { k in Storage.root((k * k) % (2 * count), of: 2 * count) }
             var kernel = [Complex.Number<Scalar>](repeating: .zero, count: length)
             kernel[0] = chirp[0].conjugate
-            for k in 1..<Swift.max(count, 1) {
+            chirp.indices.dropFirst().forEach { k in
                 kernel[k] = chirp[k].conjugate
                 kernel[length - k] = chirp[k].conjugate
             }
@@ -30,21 +30,17 @@ extension Fourier.Transform {
             self.response = inner.storage.forward(kernel)
             self.inner = inner
         }
+    }
+}
 
-        @inlinable
-        internal func forward(_ signal: [Complex.Number<Scalar>]) -> [Complex.Number<Scalar>] {
-            let length = response.count
-            var a = [Complex.Number<Scalar>](repeating: .zero, count: length)
-            for k in signal.indices {
-                a[k] = signal[k] * chirp[k]
-            }
-            var spectrum = inner.storage.forward(a)
-            for index in spectrum.indices {
-                spectrum[index] = spectrum[index] * response[index]
-            }
-            let convolution = inner.storage.inverse(spectrum)
-            return signal.indices.map { convolution[$0] * chirp[$0] }
-        }
+extension Fourier.Transform.Bluestein {
+    @inlinable
+    internal func forward(_ signal: [Complex.Number<Scalar>]) -> [Complex.Number<Scalar>] {
+        var chirped = [Complex.Number<Scalar>](repeating: .zero, count: response.count)
+        signal.indices.forEach { k in chirped[k] = signal[k] * chirp[k] }
+        let spectrum = zip(inner.storage.forward(chirped), response).map { $0 * $1 }
+        let convolution = inner.storage.inverse(spectrum)
+        return signal.indices.map { convolution[$0] * chirp[$0] }
     }
 }
 

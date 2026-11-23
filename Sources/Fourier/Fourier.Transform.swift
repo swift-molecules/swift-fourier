@@ -62,12 +62,9 @@ extension Fourier.Transform {
     @inlinable
     public func inverse(real spectrum: [Complex.Number<Scalar>]) throws(Fourier.Error) -> [Scalar] {
         let length = storage.count
-        guard spectrum.count == length / 2 + 1 else { throw .count }
-        var full = spectrum
-        full.reserveCapacity(length)
-        for bin in (length / 2 + 1)..<Swift.max(length, length / 2 + 1) {
-            full.append(spectrum[length - bin].conjugate)
-        }
-        return storage.inverse(full).map { $0.realValue }
+        let bins = length / 2 + 1
+        guard spectrum.count == bins else { throw .count }
+        let mirrored = spectrum[1..<(length + 1) / 2].reversed().map { $0.conjugate }
+        return storage.inverse(spectrum + mirrored).map { $0.realValue }
     }
 }

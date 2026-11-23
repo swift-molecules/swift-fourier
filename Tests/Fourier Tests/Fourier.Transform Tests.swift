@@ -91,7 +91,7 @@ extension `Fourier.Transform Tests` {
                 let x = (0..<n).map { t in C(Double.cos(2 * Double.pi * Double((k * t) % n) / Double(n))) }
                 let transform = try Fourier.Transform<Double>(count: Cardinal(UInt(n)))
                 let spectrum = try transform.forward(x)
-                for bin in 0..<n {
+                (0..<n).forEach { bin in
                     let expected = bin == k || bin == n - k ? Double(n) / 2 : 0
                     #expect((spectrum[bin] - C(expected)).magnitude().value <= 1e-11 * Double(n), "length \(n) bin \(bin)")
                 }
@@ -158,8 +158,9 @@ extension `Fourier.Transform Tests` {
                 let x = signal(n).map(\.realValue)
                 let transform = try Fourier.Transform<Double>(count: Cardinal(UInt(n)))
                 let half = try transform.forward(real: x)
-                #expect(half.count == n / 2 + 1)
-                #expect(transform.bins == Cardinal(UInt(n / 2 + 1)))
+                let bins = n / 2 + 1
+                #expect(Cardinal(UInt(half.count)) == transform.bins)
+                #expect(transform.bins == Cardinal(UInt(bins)))
                 #expect(half == Array(try transform.forward(x.map { C($0) }).prefix(n / 2 + 1)))
             }
         }

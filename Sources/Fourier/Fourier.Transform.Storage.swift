@@ -132,20 +132,30 @@ extension Fourier.Transform.Storage {
         }
         let p = factors[factor]
         let m = length / p
-        for j in 0..<p {
-            radix(input, from: start + j * stride, stride: stride * p, into: &output, at: offset + j * m, count: m, factor: factor + 1, scratch: &scratch)
+        (0..<p).forEach { j in
+            radix(
+                input,
+                from: start + j * stride,
+                stride: stride * p,
+                into: &output,
+                at: offset + j * m,
+                count: m,
+                factor: factor + 1,
+                scratch: &scratch
+            )
         }
         let step = count / length
         switch p {
         case 2:
-            for k in 0..<m {
+            (0..<m).forEach { k in
                 let a = output[offset + k]
                 let b = output[offset + m + k] * roots[k * step]
                 output[offset + k] = a + b
                 output[offset + m + k] = a - b
             }
+
         case 4:
-            for k in 0..<m {
+            (0..<m).forEach { k in
                 let a0 = output[offset + k]
                 let a1 = output[offset + m + k] * roots[k * step]
                 let a2 = output[offset + 2 * m + k] * roots[2 * k * step]
@@ -160,18 +170,17 @@ extension Fourier.Transform.Storage {
                 output[offset + 2 * m + k] = t0 - t2
                 output[offset + 3 * m + k] = t1 - t3
             }
+
         default:
             let turn = count / p
-            for k in 0..<m {
-                for j in 0..<p {
+            (0..<m).forEach { k in
+                (0..<p).forEach { j in
                     scratch[j] = output[offset + j * m + k] * roots[j * k * step]
                 }
-                for q in 0..<p {
-                    var sum = scratch[0]
-                    for j in 1..<p {
-                        sum += scratch[j] * roots[((j * q) % p) * turn]
+                (0..<p).forEach { q in
+                    output[offset + q * m + k] = (1..<p).reduce(scratch[0]) { sum, j in
+                        sum + scratch[j] * roots[((j * q) % p) * turn]
                     }
-                    output[offset + q * m + k] = sum
                 }
             }
         }
