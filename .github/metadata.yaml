@@ -1,0 +1,9 @@
+description: "The discrete Fourier transform for Swift: real and complex, any length, forward and inverse."
+topics:
+  - primitives
+  - fourier
+  - signal
+  - spectrum
+homepage: "https://swift-institute.org"
+readme:
+  family: E
