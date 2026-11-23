@@ -214,3 +214,34 @@ extension `Fourier.Transform Tests` {
         }
     }
 }
+
+extension `Fourier.Transform Tests` {
+    @Suite
+    struct `Goertzel gives the transform at one frequency` {
+        @Test
+        func `At a bin it is the bin's power`() throws {
+            for n in [16, 45, 97, 256] {
+                let x = signal(n, seed: 13).map(\.realValue)
+                let spectrum = try Fourier.Transform<Double>(count: Cardinal(UInt(n))).forward(real: x)
+                spectrum.indices.forEach { k in
+                    let power = Fourier.Goertzel(frequency: Double(k) / Double(n)).power(of: x)
+                    let bin = spectrum[k].magnitude.squared.value
+                    #expect(Swift.abs(power - bin) <= 1e-10 * Swift.max(1, bin), "length \(n) bin \(k)")
+                }
+            }
+        }
+
+        @Test
+        func `Between bins it is the sum that defines it`() {
+            let x = signal(50, seed: 17).map(\.realValue)
+            let frequency = 0.1234
+            let sum = x.indices.reduce(C.zero) { sum, t in
+                let angle = -2 * Double.pi * frequency * Double(t)
+                return sum + C(x[t]) * C(Double.cos(angle), Double.sin(angle))
+            }
+            let power = Fourier.Goertzel(frequency: frequency).power(of: x)
+            #expect(Swift.abs(power - sum.magnitude.squared.value) <= 1e-10 * sum.magnitude.squared.value)
+            #expect(Fourier.Goertzel(frequency: frequency).power(of: [Double]()) == 0)
+        }
+    }
+}
